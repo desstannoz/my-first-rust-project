@@ -11,8 +11,9 @@ async fn main() {
     let app = Router::new().route("/", get(handler));
 
     println!("Listening on http://0.0.0.0:3000");
+    let port = std::env::var("PORT").unwrap_or("3000".to_string());
     axum::serve(
-        tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap(),
+        tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap(),
         app.into_make_service(),
     )
     .await
