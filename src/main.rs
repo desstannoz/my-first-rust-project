@@ -1,7 +1,7 @@
-use sea_orm::{Database, DatabaseConnection};
 use sea_orm::ConnectionTrait;
-use sea_orm::Statement;
 use sea_orm::DatabaseBackend;
+use sea_orm::{Database, DatabaseConnection, Schema, Statement};
+use sea_orm_migration::prelude::SqliteQueryBuilder;
 
 mod controllers;
 mod middleware;
@@ -23,22 +23,17 @@ async fn main() {
         .await
         .expect("Failed to connect to database");
 
-    // SQLite tablo oluşturma
-    let stmt = Statement::from_string(
-        DatabaseBackend::Sqlite,
-        r#"CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password TEXT NOT NULL
-        )"#.to_owned(),
-    );
+    // Model'e göre tablo oluştur
+    let schema = Schema::new(DatabaseBackend::Sqlite);
+    let sql = schema.create_table_from_entity(models::user::Entity)
+        .if_not_exists()
+        .build(SqliteQueryBuilder);
 
-    db.execute(stmt)
+    db.execute(Statement::from_string(DatabaseBackend::Sqlite, sql))
         .await
         .expect("Could not create table");
-    
-    println!("Database initialized successfully");
 
-   
+    println!("Database initialized successfully");
 
     let app = routes::routes(db);
 
