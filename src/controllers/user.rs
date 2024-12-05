@@ -7,9 +7,9 @@ use sea_orm::EntityTrait;
 use serde_json;
 
 use crate::{
-    UserContext,
+    middleware::auth::UserContext,
     DB,
-    models::user::Entity as Users,
+    models::user::Entity as Users
 };
 
 pub async fn me(

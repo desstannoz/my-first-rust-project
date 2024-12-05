@@ -1,14 +1,13 @@
 use axum::{extract::State, http::StatusCode, Json};
 use bcrypt::{hash, verify};
-use jsonwebtoken::{encode, Header, EncodingKey};
+use jsonwebtoken::{encode, EncodingKey, Header};
+use sea_orm::{ActiveModelTrait, EntityTrait};
 use serde_json;
-use sea_orm::{EntityTrait, ActiveModelTrait};
 
 use crate::{
-    Claims,
+    middleware::auth::{Claims, KEY},
+    models::user::{ActiveModel as UserActive, Entity as Users},
     DB,
-    KEY,
-    models::user::{Entity as Users, ActiveModel as UserActive},
 };
 
 pub async fn register(
@@ -22,11 +21,10 @@ pub async fn register(
         .as_str()
         .ok_or(StatusCode::BAD_REQUEST)?;
 
-    let hashed_password = hash(password, 10)
-        .map_err(|e| {
-            eprintln!("Hashing error: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    let hashed_password = hash(password, 10).map_err(|e| {
+        eprintln!("Hashing error: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let user = UserActive {
         username: sea_orm::ActiveValue::Set(username.to_string()),
@@ -67,9 +65,14 @@ pub async fn login(
                     .unwrap()
                     .timestamp() as usize,
             };
-            let token = encode(&Header::default(), &payload, &EncodingKey::from_secret(KEY)).unwrap();
+            let token = encode(
+                &Header::default(),
+                &payload,
+                &EncodingKey::from_secret(KEY),
+            )
+            .unwrap();
             Ok(Json(token))
         }
         _ => Err(StatusCode::UNAUTHORIZED),
     }
-} 
+}
