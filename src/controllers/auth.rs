@@ -1,12 +1,12 @@
 use axum::{extract::State, http::StatusCode, Json};
 use bcrypt::{hash, verify};
 use jsonwebtoken::{encode, EncodingKey, Header};
-use sea_orm::{ActiveModelTrait, EntityTrait};
+use sea_orm::{ActiveModelTrait, EntityTrait, ColumnTrait, QueryFilter};
 use serde_json;
 
 use crate::{
     middleware::auth::{Claims, KEY},
-    models::user::{ActiveModel as UserActive, Entity as Users},
+    models::user::{ActiveModel as UserActive, Entity as Users, Column},
     DB,
 };
 
@@ -27,6 +27,7 @@ pub async fn register(
     })?;
 
     let user = UserActive {
+        id: sea_orm::ActiveValue::NotSet,
         username: sea_orm::ActiveValue::Set(username.to_string()),
         password: sea_orm::ActiveValue::Set(hashed_password),
     };
@@ -51,7 +52,8 @@ pub async fn login(
     let username = payload["username"].as_str().unwrap();
     let password = payload["password"].as_str().unwrap();
 
-    let user = Users::find_by_id(username.to_string())
+    let user = Users::find()
+        .filter(Column::Username.eq(username.to_string()))
         .one(&db)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

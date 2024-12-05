@@ -1,6 +1,7 @@
 use sea_orm::ConnectionTrait;
 use sea_orm::DatabaseBackend;
-use sea_orm::{Database, DatabaseConnection, Schema, Statement};
+use sea_orm::Schema;
+use sea_orm::{Database, DatabaseConnection, Statement};
 use sea_orm_migration::prelude::SqliteQueryBuilder;
 
 mod controllers;
